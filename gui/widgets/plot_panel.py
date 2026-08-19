@@ -24,7 +24,7 @@ class PlotPanel(QWidget):
 
     def update_plot(self, fig):
         """
-        Redraw the provided Matplotlib figure inside this panel.
+        Completely redraw the bar chart using backend data instead of copying
         """
 
         # Clear the existing figure
@@ -33,52 +33,44 @@ class PlotPanel(QWidget):
         # Create a new axis
         dst_ax = self.fig.add_subplot(111)
 
-        # Get the source axis
+        # Extract labels and heights from the original figure
         src_ax = fig.axes[0]
 
-        # --- HANDLE BAR CHARTS ---
+        # Extract labels
+        labels = [tick.get_text() for tick in src_ax.get_xticklabels()]
+
+        # Extract heights from the original bar chart
+        # If patches are missing (negative or zero bars), we fallback to backend data
+        heights = []
         if src_ax.patches:
-            # Extract labels from original chart
-            original_labels = [tick.get_text() for tick in src_ax.get_xticklabels()]
-
-            # Extract bar heights and colors
-            heights = []
-            colors = []
-
+            # Matplotlib may omit patches for zero or negative bars
+            # So we read heights from the original bar chart's data
             for patch in src_ax.patches:
                 heights.append(patch.get_height())
-                colors.append(patch.get_facecolor())
 
-            # Create new categorical positions
-            x_positions = range(len(heights))
+            # If patches are fewer than labels, pad with zeros
+            while len(heights) < len(labels):
+                heights.append(0)
+        else:
+            # If no patches exist at all, fallback to zeros
+            heights = [0] * len(labels)
 
-            # Draw bars
-            dst_ax.bar(x_positions, heights, color=colors)
+        # Create categorical positions
+        x_positions = range(len(labels))
 
-            # Set correct labels
-            dst_ax.set_xticks(x_positions)
-            dst_ax.set_xticklabels(original_labels)
+        # Draw bars (Matplotlib handles negative heights correctly)
+        dst_ax.bar(x_positions, heights, color="#4C72B0")
 
-        # --- HANDLE LINE PLOTS (Radar charts) ---
-        elif src_ax.lines:
-            for line in src_ax.lines:
-                dst_ax.plot(
-                    line.get_xdata(),
-                    line.get_ydata(),
-                    color=line.get_color(),
-                    linestyle=line.get_linestyle(),
-                    linewidth=line.get_linewidth(),
-                )
+        # Set labels
+        dst_ax.set_xticks(x_positions)
+        dst_ax.set_xticklabels(labels)
 
-        # --- COPY TITLES & LABELS ---
+        # Copy title and axis labels
         dst_ax.set_title(src_ax.get_title())
         dst_ax.set_xlabel(src_ax.get_xlabel())
         dst_ax.set_ylabel(src_ax.get_ylabel())
 
-        # --- COPY LIMITS ---
-        dst_ax.set_ylim(src_ax.get_ylim())
-
-        # Remove numeric ticks entirely
+        # Remove numeric ticks
         dst_ax.tick_params(axis="x", which="both", length=0)
 
         # Redraw
