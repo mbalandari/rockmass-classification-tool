@@ -30,6 +30,9 @@ from src.rockmass.reports.report_txt import TXTReport
 
 import os
 
+REPORT_DIR = os.path.join(os.getcwd(), "reports")
+os.makedirs(REPORT_DIR, exist_ok=True)
+
 
 class MainWindow(QMainWindow):
     """Main application window."""
@@ -76,6 +79,8 @@ class MainWindow(QMainWindow):
 
         file_menu = menu.addMenu("File")
         export_menu = menu.addMenu("Export")
+        exit_action = file_menu.addAction("Exit")
+        exit_action.triggered.connect(self.close)
 
         export_pdf_action = export_menu.addAction("Export PDF")
         export_docx_action = export_menu.addAction("Export DOCX")
@@ -148,18 +153,18 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "last_result"):
             return
         report = PDFReport(self.last_result)
-        report.generate(os.path.join(os.getcwd(), "rockmass_report.pdf"))
+        report.generate(os.path.join(REPORT_DIR, "rockmass_report.pdf"))
 
     def export_docx(self):
         """Export DOCX report."""
         if not hasattr(self, "last_result"):
             return
         report = DOCXReport(self.last_result)
-        report.generate(os.path.join(os.getcwd(), "rockmass_report.docx"))
+        report.generate(os.path.join(REPORT_DIR, "rockmass_report.docx"))
 
     def export_txt(self):
         """Export TXT report."""
         if not hasattr(self, "last_result"):
             return
         report = TXTReport(self.last_result)
-        report.generate(os.path.join(os.getcwd(), "rockmass_report.txt"))
+        report.generate(os.path.join(REPORT_DIR, "rockmass_report.txt"))
