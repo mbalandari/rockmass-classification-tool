@@ -67,31 +67,69 @@ def create_q_radar_chart(breakdown: dict):
     return fig
 
 
-def create_gsi_diagram(breakdown: dict):
+def create_gsi_diagram(gsi_breakdown, gsi_value=None):
     """
-    Create a simple GSI diagram showing structure and surface adjustment.
+    Creates a real GSI diagram with structure domains and a marker for the
+    calculated GSI value.
 
-    Args:
-        breakdown: Dictionary with GSI components.
-
-    Returns:
-        Matplotlib Figure object.
+    gsi_breakdown: dict (not used for value, only kept for future extensions)
+    gsi_value: numeric GSI (if None, try to infer from breakdown)
     """
+
+    import matplotlib.pyplot as plt
+
+    # If gsi_value is not provided, try to infer it from the dict
+    if gsi_value is None:
+        # Try common key names
+        for key in ("GSI", "gsi", "value"):
+            if key in gsi_breakdown:
+                gsi_value = gsi_breakdown[key]
+                break
+        else:
+            # As a last resort, if the dict is empty or doesn’t contain GSI,
+            # fall back to 0
+            gsi_value = 0
+
     fig, ax = plt.subplots(figsize=(6, 4))
 
-    base = breakdown["structure_base"]
-    adj = breakdown["surface_adjustment"]
-    gsi = base + adj
+    # GSI zones (Hoek & Marinos)
+    zones = [
+        ("Massive", 75, 100, "#4C72B0"),
+        ("Blocky", 55, 75, "#55A868"),
+        ("Very Blocky", 35, 55, "#C44E52"),
+        ("Disintegrated", 20, 35, "#8172B2"),
+        ("Laminated", 10, 20, "#CCB974"),
+        ("Sheared", 0, 10, "#64B5CD"),
+    ]
 
-    ax.bar(
-        ["Base", "Adjustment", "Final GSI"],
-        [base, adj, gsi],
-        color=["#4C72B0", "#55A868", "#C44E52"],
-    )
+    # Draw shaded zones
+    for label, gsi_min, gsi_max, color in zones:
+        ax.fill_between(
+            [0, 1],
+            gsi_min,
+            gsi_max,
+            color=color,
+            alpha=0.5,
+            label=f"{label} ({gsi_min}-{gsi_max})",
+        )
 
-    ax.set_title("GSI Breakdown")
-    ax.set_ylabel("GSI Value")
-    ax.grid(axis="y", linestyle="--", alpha=0.5)
+    # Plot the user's GSI value
+    ax.plot(0.5, gsi_value, "ko", markersize=10)
+    ax.text(0.52, gsi_value, f"GSI = {gsi_value}", va="center")
+
+    # Formatting
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 100)
+    ax.set_xticks([])
+    ax.set_ylabel("Geological Strength Index (GSI)")
+    ax.set_title("GSI Structure Domains (Hoek & Marinos)")
+
+    ax.legend(loc="lower right", fontsize=8)
 
     fig.tight_layout()
     return fig
+
+
+def save_figure_as_png(fig, filename):
+    """Save a Matplotlib figure as a PNG file."""
+    fig.savefig(filename, dpi=300, bbox_inches="tight")

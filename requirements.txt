@@ -1,7 +1,9 @@
 charset-normalizer==3.5.1
 contourpy==1.3.3
 cycler==0.12.1
+defusedxml==0.7.1
 fonttools==4.63.0
+fpdf2==2.8.8
 kiwisolver==1.5.0
 lxml==6.1.1
 matplotlib==3.11.1
