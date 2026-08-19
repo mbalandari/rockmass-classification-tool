@@ -6,7 +6,18 @@ Defines the overall layout:
 - Right bottom: Plot panel
 """
 
-from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QMenuBar
+import os
+
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QHBoxLayout,
+    QVBoxLayout,
+    QMenuBar,
+    QMessageBox,
+)
+from PySide6.QtGui import QAction
+
 from .widgets.input_panel import InputPanel
 from .widgets.result_panel import ResultPanel
 from .widgets.plot_panel import PlotPanel
@@ -28,8 +39,6 @@ from src.rockmass.reports.report_pdf import PDFReport
 from src.rockmass.reports.report_docx import DOCXReport
 from src.rockmass.reports.report_txt import TXTReport
 
-import os
-
 REPORT_DIR = os.path.join(os.getcwd(), "reports")
 os.makedirs(REPORT_DIR, exist_ok=True)
 
@@ -43,15 +52,14 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Rock Mass Classification Tool")
         self.resize(1200, 800)
 
-        # Central widget
+        # Central widget and main layout
         central = QWidget()
         self.setCentralWidget(central)
 
-        # Layouts
         main_layout = QHBoxLayout()
         right_layout = QVBoxLayout()
 
-        # Widgets
+        # Panels
         self.input_panel = InputPanel()
         self.result_panel = ResultPanel()
         self.plot_panel = PlotPanel()
@@ -59,11 +67,11 @@ class MainWindow(QMainWindow):
         # Connect the Run button to backend logic
         self.input_panel.run_button.clicked.connect(self.run_classification)
 
-        # Assemble right side
+        # Assemble right side (top: results, bottom: plot)
         right_layout.addWidget(self.result_panel, stretch=1)
         right_layout.addWidget(self.plot_panel, stretch=2)
 
-        # Assemble main layout
+        # Assemble main layout (left: input, right: results+plot)
         main_layout.addWidget(self.input_panel, stretch=1)
         main_layout.addLayout(right_layout, stretch=2)
 
@@ -72,23 +80,40 @@ class MainWindow(QMainWindow):
         # Menu bar
         self._create_menu()
 
+        # Last result placeholder
+        self.last_result: ClassificationResult | None = None
+
     def _create_menu(self):
-        """Create menu bar with export options."""
-        menu = QMenuBar()
-        self.setMenuBar(menu)
+        """Create menu bar with export options and About."""
+        menubar: QMenuBar = self.menuBar()
 
-        file_menu = menu.addMenu("File")
-        export_menu = menu.addMenu("Export")
-        exit_action = file_menu.addAction("Exit")
+        # File menu
+        file_menu = menubar.addMenu("File")
+        exit_action = QAction("Exit", self)
         exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
 
-        export_pdf_action = export_menu.addAction("Export PDF")
-        export_docx_action = export_menu.addAction("Export DOCX")
-        export_txt_action = export_menu.addAction("Export TXT")
+        # Export menu
+        export_menu = menubar.addMenu("Export")
 
+        export_pdf_action = QAction("Export PDF", self)
         export_pdf_action.triggered.connect(self.export_pdf)
+        export_menu.addAction(export_pdf_action)
+
+        export_docx_action = QAction("Export DOCX", self)
         export_docx_action.triggered.connect(self.export_docx)
+        export_menu.addAction(export_docx_action)
+
+        export_txt_action = QAction("Export TXT", self)
         export_txt_action.triggered.connect(self.export_txt)
+        export_menu.addAction(export_txt_action)
+
+        # Help menu
+        help_menu = menubar.addMenu("Help")
+
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about_dialog)
+        help_menu.addAction(about_action)
 
     def run_classification(self):
         """Read inputs, run backend classification, update results and plots."""
@@ -141,30 +166,83 @@ class MainWindow(QMainWindow):
         # Store last result for exporting
         self.last_result = result
 
-        # Update GUI
+        # Update GUI results
         self.result_panel.update_results(result)
 
-        # Update plot (RMR chart for now)
+        # Update plot (RMR chart for now; Q and GSI are in reports)
         fig = create_rmr_bar_chart(rmr_breakdown)
         self.plot_panel.update_plot(fig)
 
+        QMessageBox.information(
+            self,
+            "Classification Complete",
+            "Rock mass classification has been computed successfully.",
+        )
+
+    def _ensure_result(self) -> bool:
+        if self.last_result is None:
+            QMessageBox.warning(
+                self,
+                "No Result",
+                "Please run the classification before exporting a report.",
+            )
+            return False
+        return True
+
     def export_pdf(self):
         """Export PDF report."""
-        if not hasattr(self, "last_result"):
+        if not self._ensure_result():
             return
         report = PDFReport(self.last_result)
-        report.generate(os.path.join(REPORT_DIR, "rockmass_report.pdf"))
+        path = os.path.join(REPORT_DIR, "rockmass_report.pdf")
+        report.generate(path)
+        QMessageBox.information(
+            self,
+            "Export Successful",
+            f"PDF report saved to:\n{path}",
+        )
 
     def export_docx(self):
         """Export DOCX report."""
-        if not hasattr(self, "last_result"):
+        if not self._ensure_result():
             return
         report = DOCXReport(self.last_result)
-        report.generate(os.path.join(REPORT_DIR, "rockmass_report.docx"))
+        path = os.path.join(REPORT_DIR, "rockmass_report.docx")
+        report.generate(path)
+        QMessageBox.information(
+            self,
+            "Export Successful",
+            f"DOCX report saved to:\n{path}",
+        )
 
     def export_txt(self):
         """Export TXT report."""
-        if not hasattr(self, "last_result"):
+        if not self._ensure_result():
             return
         report = TXTReport(self.last_result)
-        report.generate(os.path.join(REPORT_DIR, "rockmass_report.txt"))
+        path = os.path.join(REPORT_DIR, "rockmass_report.txt")
+        report.generate(path)
+        QMessageBox.information(
+            self,
+            "Export Successful",
+            f"TXT report saved to:\n{path}",
+        )
+
+    def show_about_dialog(self):
+        QMessageBox.information(
+            self,
+            "About RockMass Classifier",
+            (
+                "RockMass Classifier\n"
+                "Version 1.0\n\n"
+                "A professional rock mass classification tool based on:\n"
+                "- RMR (Bieniawski)\n"
+                "- Q-System (Barton et al.)\n"
+                "- GSI (Hoek & Marinos)\n\n"
+                "Features:\n"
+                "- Engineering-grade charts\n"
+                "- PDF, DOCX, TXT reporting\n"
+                "- Clean GUI for fast input\n\n"
+                "Developed by Maz."
+            ),
+        )
