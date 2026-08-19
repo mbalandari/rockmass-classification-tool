@@ -9,59 +9,85 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def create_rmr_bar_chart(breakdown: dict):
+def create_rmr_bar_chart(rmr_breakdown):
     """
-    Create a bar chart showing RMR component ratings.
-
-    Args:
-        breakdown: Dictionary with RMR component ratings.
-
-    Returns:
-        Matplotlib Figure object.
+    Professional RMR bar chart with engineering colors, labels, and grid.
     """
-    labels = list(breakdown.keys())
-    values = list(breakdown.values())
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(labels, values, color="#4C72B0")
+    import matplotlib.pyplot as plt
+    import numpy as np
 
-    ax.set_title("RMR Breakdown")
-    ax.set_ylabel("Rating")
-    ax.set_ylim(0, max(values) + 5)
+    labels = list(rmr_breakdown.keys())
+    values = list(rmr_breakdown.values())
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+
+    # Engineering color palette
+    colors = [
+        "#4C72B0",  # Strength
+        "#55A868",  # RQD
+        "#C44E52",  # Joint Spacing
+        "#8172B2",  # Joint Condition
+        "#CCB974",  # Groundwater
+        "#64B5CD",  # Orientation
+    ]
+
+    # Bar chart
+    bars = ax.bar(labels, values, color=colors)
+
+    # Add value labels above bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            height + 0.5,
+            f"{height:.1f}",
+            ha="center",
+            va="bottom",
+            fontsize=9,
+        )
+
+    # Formatting
+    ax.set_title("RMR Breakdown", fontsize=14, fontweight="bold")
+    ax.set_ylabel("Score Contribution")
     ax.grid(axis="y", linestyle="--", alpha=0.5)
 
+    plt.xticks(rotation=30, ha="right")
     fig.tight_layout()
     return fig
 
 
-def create_q_radar_chart(breakdown: dict):
+def create_q_radar_chart(q_breakdown):
     """
-    Create a radar chart for Q-System components.
-
-    Args:
-        breakdown: Dictionary with Q-System components.
-
-    Returns:
-        Matplotlib Figure object.
+    Professional radar chart for Q-system with proper scaling and styling.
     """
-    labels = ["RQD/Jn", "Jr/Ja", "Jw/SRF"]
-    values = [
-        breakdown["RQD_over_Jn"],
-        breakdown["Jr_over_Ja"],
-        breakdown["Jw_over_SRF"],
-    ]
 
-    angles = np.linspace(0, 2 * np.pi, len(labels), endpoint=False)
-    values = np.concatenate((values, [values[0]]))
-    angles = np.concatenate((angles, [angles[0]]))
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    labels = list(q_breakdown.keys())
+    values = list(q_breakdown.values())
+
+    # Radar charts must close the loop
+    labels.append(labels[0])
+    values.append(values[0])
+
+    angles = np.linspace(0, 2 * np.pi, len(labels))
 
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
-    ax.plot(angles, values, "o-", linewidth=2)
-    ax.fill(angles, values, alpha=0.25)
 
-    ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels)
-    ax.set_title("Q-System Radar Chart")
+    # Plot
+    ax.plot(angles, values, color="#4C72B0", linewidth=2)
+    ax.fill(angles, values, color="#4C72B0", alpha=0.25)
+
+    # Formatting
+    ax.set_title("Q-System Breakdown", fontsize=14, fontweight="bold", pad=20)
+    ax.set_xticks(angles)
+    ax.set_xticklabels(labels, fontsize=10)
+
+    # Radial grid
+    ax.set_rlabel_position(0)
+    ax.grid(True, linestyle="--", alpha=0.5)
 
     fig.tight_layout()
     return fig
