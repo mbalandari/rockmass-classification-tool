@@ -8,6 +8,8 @@ A desktop application for rock mass classification using:
 
 Built with **PySide6**, this tool provides a clean GUI, engineering‑grade charts, and exportable reports for practical geotechnical and rock mechanics work.
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 ---
 
 ## ✨ Features

@@ -243,6 +243,6 @@ class MainWindow(QMainWindow):
                 "- Engineering-grade charts\n"
                 "- PDF, DOCX, TXT reporting\n"
                 "- Clean GUI for fast input\n\n"
-                "Developed by Maz."
+                "Developed by M. Balandari Toroghi"
             ),
         )
