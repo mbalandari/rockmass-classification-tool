@@ -39,9 +39,7 @@ A desktop engineering application for preliminary rock-mass classification using
     - [Q-System](#q-system-1)
     - [GSI](#gsi-1)
     - [Support](#support)
-  - [Testing](#testing)
   - [Documentation](#documentation)
-  - [Engineering scope and limitations](#engineering-scope-and-limitations)
   - [Development](#development)
   - [License](#license)
 
@@ -93,14 +91,14 @@ PDF and DOCX reports include the classification breakdowns and generated RMR, Q,
 
 The implementation uses the following components:
 
-| Parameter                | Input     | Implemented contribution |
-| ------------------------ | --------- | -----------------------: |
-| Intact rock strength     | UCS (MPa) |                     0–15 |
-| Rock Quality Designation | RQD (%)   |                     3–20 |
-| Joint spacing            | m         |                     5–20 |
-| Joint condition          | category  |                     0–30 |
-| Groundwater              | category  |                     0–15 |
-| Orientation adjustment   | category  |                -12 to +5 |
+| Parameter                | Input     |       RMR |
+| ------------------------ | --------- | --------: |
+| Intact rock strength     | UCS (MPa) |      0–15 |
+| Rock Quality Designation | RQD (%)   |      3–20 |
+| Joint spacing            | m         |      5–20 |
+| Joint condition          | category  |      0–30 |
+| Groundwater              | category  |      0–15 |
+| Orientation adjustment   | category  | -12 to +5 |
 
 The exact category thresholds and mappings are documented in [`docs/engineering.md`](docs/engineering.md).
 
@@ -401,28 +399,6 @@ from src.rockmass.support import compute_support
 support = compute_support(q_value=10, span=5)
 ```
 
-## Testing
-
-The repository contains four test files corresponding to the main engineering modules:
-
-- `test_rmr.py`
-- `test_qsystem.py`
-- `test_gsi.py`
-- `test_support.py`
-
-At the current repository state, these files are placeholders rather than populated automated test suites. Therefore the existence of the test directory should not be interpreted as evidence that the engineering calculations are comprehensively regression-tested.
-
-A future test suite should cover:
-
-- Every rating threshold, including exact boundary values.
-- Valid and invalid categorical inputs.
-- Zero and negative numeric inputs.
-- Q-System denominator handling.
-- GSI structure and surface-condition combinations.
-- Support threshold boundaries.
-- Report generation.
-- GUI-to-backend integration.
-
 ## Documentation
 
 | Document                                             | Purpose                                                                   |
@@ -433,26 +409,6 @@ A future test suite should cover:
 | [`docs/architecture.md`](docs/architecture.md)       | Software architecture and data flow                                       |
 | [`docs/troubleshooting.md`](docs/troubleshooting.md) | Common runtime and input problems                                         |
 | [`docs/changelog.md`](docs/changelog.md)             | Documentation of project changes and release notes                        |
-
-## Engineering scope and limitations
-
-The software should be regarded as a classification and reporting aid rather than a complete geotechnical design system.
-
-Important current implementation limitations include:
-
-1. **Input validation is minimal.** GUI fields are free text and numeric conversion errors can terminate the classification action rather than presenting a structured validation message.
-2. **Unknown categorical values silently fall back to defaults** in several calculation functions.
-3. **RMR class labels are not calculated.** The software returns a numerical RMR value and component breakdown but does not currently assign the conventional RMR rock-mass class in the backend.
-4. **GSI is simplified.** The implementation uses lookup midpoints plus a surface adjustment rather than a full graphical/observational GSI assessment workflow.
-5. **Weathering is not part of the current GSI calculation.**
-6. **Support logic is simplified.** The Q-based support table is not a full implementation of excavation-support design charts or project-specific support design.
-7. **No excavation span is collected by the GUI.** The support function uses its default span of 5 m when called from the GUI.
-8. **The live GUI displays only the RMR chart.** Q and GSI graphics are generated during report creation.
-9. **Reports overwrite fixed filenames** when exported repeatedly in the same working directory.
-10. **Automated tests are currently empty placeholders.**
-11. **The repository currently has no `pyproject.toml`**, although the original README refers to one.
-
-These points are intentionally explicit so that the documentation reflects the current implementation rather than overstating the software's engineering scope.
 
 ## Development
 
